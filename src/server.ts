@@ -1,32 +1,23 @@
 import * as express from 'express';
 import { Card } from './interfaces';
-import { title } from 'process';
+import { fetchData, findUnique, formattedPrice } from './utils';
+import { CARDS_URL, TEMPLATES_URL, SIZES_URL } from './constants';
 
 export const app = express();
-
-const BASE_URL = 'https://moonpig.github.io/tech-test-node-backend';
-const CARDS_URL = `${BASE_URL}/cards.json`;
-const TEMPLATES = `${BASE_URL}/templates.json`;
-const SIZES_URL = `${BASE_URL}/sizes.json`;
 
 app.set('json spaces', 2);
 
 app.get('/cards', async (req, res) => {
   // respond with a list of cards
-  const cardsResponse = await fetch(CARDS_URL);
-  const cardsData = await cardsResponse.json();
+  const cardsCollection = await fetchData(CARDS_URL);
+  const templatesCollection = await fetchData(TEMPLATES_URL);
 
-  const templateResponse = await fetch(TEMPLATES);
-  const templateData = await templateResponse.json();
-
-  const cards = await cardsData.reduce(
+  const cards = await cardsCollection.reduce(
     (cards: Card[], { id, title, pages }) => {
+      const templateId = pages[0]['templateId']; // first element of pages array is front-cover-*
       const newId = `/cards/${id}`;
 
-      const templateId = pages[0]['templateId']; // first element of pages array is front-cover-*
-      const imageUrl = templateData.find(
-        ({ id }) => id === templateId
-      ).imageUrl;
+      const { imageUrl } = findUnique(templatesCollection, templateId);
 
       return [...cards, { title, url: newId, imageUrl }];
     },
@@ -38,48 +29,41 @@ app.get('/cards', async (req, res) => {
 
 app.get('/cards/:cardId/:sizeId?', async (req, res) => {
   // respond with card by id
-  const cardsResponse = await fetch(CARDS_URL);
-  const cardsData = await cardsResponse.json();
-
-  const templateResponse = await fetch(TEMPLATES);
-  const templateData = await templateResponse.json();
-
-  const sizesResponse = await fetch(SIZES_URL);
-  const sizesData = await sizesResponse.json();
-
   const { cardId, sizeId } = req.params;
-  const { title, pages, sizes, basePrice } = await cardsData.find(
-    ({ id }) => id === cardId
+  const cardsCollection = await fetchData(CARDS_URL);
+  const templatesCollection = await fetchData(TEMPLATES_URL);
+  const sizesCollection = await fetchData(SIZES_URL);
+
+  const { title, pages, sizes, basePrice } = findUnique(
+    cardsCollection,
+    cardId
   );
 
-  // const pageTitles = pages.map(({ title }) => title);
+  const templateId = pages[0]['templateId'];
+
+  const { imageUrl } = findUnique(templatesCollection, templateId);
+
+  const { priceMultiplier } = findUnique(sizesCollection, sizeId);
+  const price = formattedPrice(basePrice, priceMultiplier);
 
   const availableSizesWithTitle = sizes.reduce(
     (availableSizes, availableSize) => {
-      // OPTIONAL BELOW: is param :sizeId ie /gt included in sizes? if ie /gtx => undefined size => { availableSizes: null }
+      // OPTIONAL BELOW: is param :sizeId ie /gt included in sizes?
+      // if ie /gtx => undefined size => { availableSizes: null }
       // const hasSize = sizes.includes(sizeId);
       // if (!hasSize) return null;
+      const { id, title } = findUnique(sizesCollection, availableSize);
 
-      const { id, title } = sizesData.find(({ id }) => id === availableSize);
       return [...availableSizes, { id, title }];
     },
     []
   );
 
-  const templateId = pages[0]['templateId'];
-  const { imageUrl } = templateData.find(({ id }) => id === templateId);
-
-  const { priceMultiplier } = sizesData.find(({ id }) => id === sizeId);
-  const price = new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-  }).format((basePrice * priceMultiplier) / 100);
-
   const pagesWithSizeUrl = pages.reduce((extendedPages, extendedPage) => {
     const { title, templateId } = extendedPage;
-
-    const { width, height, imageUrl } = templateData.find(
-      ({ id }) => id === templateId
+    const { width, height, imageUrl } = findUnique(
+      templatesCollection,
+      templateId
     );
 
     return [...extendedPages, { title, width, height, imageUrl }];
