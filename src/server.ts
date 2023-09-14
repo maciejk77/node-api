@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { ICard, IPage, ISize, IPageTemplate } from './interfaces';
-import { fetchData, getElementById, formattedPrice } from './utils';
+import { fetchData, getElementById, formatPrice } from './utils';
 import { CARDS_URL, TEMPLATES_URL, SIZES_URL } from './constants';
 
 export const app = express();
@@ -33,7 +33,9 @@ app.get('/cards', async (req, res) => {
 app.get('/cards/:cardId/:sizeId?', async (req, res) => {
   try {
     // respond with card by id
+    let price: string;
     const { cardId, sizeId } = req.params;
+
     const cardsCollection = await fetchData(CARDS_URL);
     const templatesCollection = await fetchData(TEMPLATES_URL);
     const sizesCollection = await fetchData(SIZES_URL);
@@ -46,8 +48,13 @@ app.get('/cards/:cardId/:sizeId?', async (req, res) => {
     const templateId = pages[0]['templateId'];
     const { imageUrl } = getElementById(templatesCollection, templateId);
 
-    const { priceMultiplier } = getElementById(sizesCollection, sizeId);
-    const price = formattedPrice(basePrice, priceMultiplier);
+    // if sizeId exist multiply price, otherwise return base price
+    if (sizeId) {
+      const { priceMultiplier } = getElementById(sizesCollection, sizeId);
+      price = formatPrice(basePrice, priceMultiplier);
+    } else {
+      price = formatPrice(basePrice);
+    }
 
     const availableSizesWithTitle = sizes.reduce(
       (availableSizes: ISize[], availableSize: string) => {
@@ -86,7 +93,7 @@ app.get('/cards/:cardId/:sizeId?', async (req, res) => {
     return res
       .status(400)
       .send(
-        `Error: Unable to fetch data, cardId not found, or size not matching sm/md/lg/gt`
+        `Error: Unable to fetch data, wrong cardId or size in the URL (not matching sm/md/lg/gt)`
       );
   }
 });
