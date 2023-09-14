@@ -8,73 +8,85 @@ export const app = express();
 app.set('json spaces', 2);
 
 app.get('/cards', async (req, res) => {
-  // respond with a list of cards
-  const cardsCollection = await fetchData(CARDS_URL);
-  const templatesCollection = await fetchData(TEMPLATES_URL);
+  try {
+    // respond with a list of cards
+    const cardsCollection = await fetchData(CARDS_URL);
+    const templatesCollection = await fetchData(TEMPLATES_URL);
 
-  const cards = await cardsCollection.reduce(
-    (cards: ICard[], { id, title, pages }) => {
-      const newId = `/cards/${id}`;
-      const templateId = pages[0]['templateId']; // first element of pages array is front-cover-*
-      const { imageUrl } = getElementById(templatesCollection, templateId);
+    const cards = await cardsCollection.reduce(
+      (cards: ICard[], { id, title, pages }) => {
+        const newId = `/cards/${id}`;
+        const templateId = pages[0]['templateId']; // first element of pages array is front-cover-*
+        const { imageUrl } = getElementById(templatesCollection, templateId);
 
-      return [...cards, { title, url: newId, imageUrl }];
-    },
-    []
-  );
+        return [...cards, { title, url: newId, imageUrl }];
+      },
+      []
+    );
 
-  return res.send(cards);
+    return res.send(cards);
+  } catch (error) {
+    return res.status(400).send(`Error: ${error.message}`);
+  }
 });
 
 app.get('/cards/:cardId/:sizeId?', async (req, res) => {
-  // respond with card by id
-  const { cardId, sizeId } = req.params;
-  const cardsCollection = await fetchData(CARDS_URL);
-  const templatesCollection = await fetchData(TEMPLATES_URL);
-  const sizesCollection = await fetchData(SIZES_URL);
+  try {
+    // respond with card by id
+    const { cardId, sizeId } = req.params;
+    const cardsCollection = await fetchData(CARDS_URL);
+    const templatesCollection = await fetchData(TEMPLATES_URL);
+    const sizesCollection = await fetchData(SIZES_URL);
 
-  const { title, pages, sizes, basePrice } = getElementById(
-    cardsCollection,
-    cardId
-  );
+    const { title, pages, sizes, basePrice } = getElementById(
+      cardsCollection,
+      cardId
+    );
 
-  const templateId = pages[0]['templateId'];
-  const { imageUrl } = getElementById(templatesCollection, templateId);
+    const templateId = pages[0]['templateId'];
+    const { imageUrl } = getElementById(templatesCollection, templateId);
 
-  const { priceMultiplier } = getElementById(sizesCollection, sizeId);
-  const price = formattedPrice(basePrice, priceMultiplier);
+    const { priceMultiplier } = getElementById(sizesCollection, sizeId);
+    const price = formattedPrice(basePrice, priceMultiplier);
 
-  const availableSizesWithTitle = sizes.reduce(
-    (availableSizes: ISize[], availableSize: string) => {
-      // OPTIONAL BELOW: is param :sizeId ie /gt included in sizes? if not => { availableSizes: null }
-      // const hasSize = sizes.includes(sizeId);
-      // if (!hasSize) return null;
-      const { id, title } = getElementById(sizesCollection, availableSize);
+    const availableSizesWithTitle = sizes.reduce(
+      (availableSizes: ISize[], availableSize: string) => {
+        // OPTIONAL BELOW: is param :sizeId ie /gt included in sizes? if not => { availableSizes: null }
+        // const hasSize = sizes.includes(sizeId);
+        // if (!hasSize) return null;
+        const { id, title } = getElementById(sizesCollection, availableSize);
 
-      return [...availableSizes, { id, title }];
-    },
-    []
-  );
+        return [...availableSizes, { id, title }];
+      },
+      []
+    );
 
-  const pagesWithSizeUrl = pages.reduce(
-    (extendedPages: IPageTemplate[], extendedPage: IPage) => {
-      const { title, templateId } = extendedPage;
-      const { width, height, imageUrl } = getElementById(
-        templatesCollection,
-        templateId
+    const pagesWithSizeUrl = pages.reduce(
+      (extendedPages: IPageTemplate[], extendedPage: IPage) => {
+        const { title, templateId } = extendedPage;
+        const { width, height, imageUrl } = getElementById(
+          templatesCollection,
+          templateId
+        );
+
+        return [...extendedPages, { title, width, height, imageUrl }];
+      },
+      []
+    );
+
+    return res.send({
+      title,
+      size: sizeId,
+      availableSizes: availableSizesWithTitle,
+      imageUrl,
+      price,
+      pages: pagesWithSizeUrl,
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .send(
+        `Error: Unable to fetch data, cardId not found, or size not matching sm/md/lg/gt`
       );
-
-      return [...extendedPages, { title, width, height, imageUrl }];
-    },
-    []
-  );
-
-  return res.send({
-    title,
-    size: sizeId,
-    availableSizes: availableSizesWithTitle,
-    imageUrl,
-    price,
-    pages: pagesWithSizeUrl,
-  });
+  }
 });
