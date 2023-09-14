@@ -1,19 +1,27 @@
-export interface Page {
+export interface IPage {
   title: string;
-  templateId: string;
+  templateId?: string;
 }
 
-export interface Card {
+export interface ICard {
   id: string;
   title: string;
   sizes: string[];
   basePrice: number;
-  pages: Page[];
+  pages: IPage[];
 }
 
-export interface Template {
+export interface ITemplate {
   id: string;
   width: number;
   height: number;
   imageUrl: string;
 }
+
+export interface ISize {
+  id: string;
+  title: string;
+  priceMultiplier?: number;
+}
+
+export interface IPageTemplate extends IPage, ITemplate {}
