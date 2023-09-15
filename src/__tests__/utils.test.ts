@@ -1,7 +1,15 @@
-import { formatPrice, getElementById } from '../utils';
+import { formatPrice, getElementById, fetchData } from '../utils';
 import { sizesMock, templatesMock } from '../dataMocks';
+import { SIZES_URL } from '../constants';
 
 describe('Utils', () => {
+  describe('fetchData', () => {
+    test('returns data', async () => {
+      const data = await fetchData(SIZES_URL);
+      expect(data).toEqual(sizesMock);
+    });
+  });
+
   describe('getElementById', () => {
     test('returns correct size data for a given sizeId', () => {
       const size = getElementById(sizesMock, 'lg');
