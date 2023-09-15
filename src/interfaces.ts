@@ -23,5 +23,3 @@ export interface ISize {
   title: string;
   priceMultiplier?: number;
 }
-
-export interface IPageTemplate extends IPage, ITemplate {}
