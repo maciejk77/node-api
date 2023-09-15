@@ -1,3 +1,4 @@
+import { ITemplate, ISize, IPage, ICard } from './interfaces';
 export const fetchData = async (url: string) => {
   try {
     const response = await fetch(url);
@@ -14,11 +15,11 @@ export const formatPrice = (
   basePrice: number,
   priceMultiplier: number = null
 ) => {
-  const calculatePrice =
+  const calculatedPrice: number =
     (priceMultiplier ? basePrice * priceMultiplier : basePrice) / 100;
 
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'GBP',
-  }).format(calculatePrice);
+  }).format(calculatedPrice);
 };

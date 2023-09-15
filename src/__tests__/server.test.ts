@@ -66,7 +66,6 @@ describe('API', () => {
       const { status, text } = await request(app).get('/cards/card005');
 
       expect(status).toBe(400);
-      console.log(text);
       expect(text).toBe(
         'Error: Unable to fetch data, wrong cardId or size in the URL (not matching sm/md/lg/gt)'
       );
