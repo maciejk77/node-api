@@ -1,1 +1,1 @@
-Please add any additional notes here…
+Some problems using node-fetch, used cross-fetch instead (added jest.setup.js)
