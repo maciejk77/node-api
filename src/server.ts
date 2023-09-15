@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { ICard, IPage, ISize, IPageTemplate } from './interfaces';
+import { IPage } from './interfaces';
 import { fetchData, getElementById, formatPrice } from './utils';
 import { CARDS_URL, TEMPLATES_URL, SIZES_URL } from './constants';
 
@@ -13,16 +13,13 @@ app.get('/cards', async (req, res) => {
     const cardsCollection = await fetchData(CARDS_URL);
     const templatesCollection = await fetchData(TEMPLATES_URL);
 
-    const cards = await cardsCollection.reduce(
-      (cards: ICard[], { id, title, pages }) => {
-        const newId = `/cards/${id}`;
-        const templateId = pages[0]['templateId']; // first element of pages array is front-cover-*
-        const { imageUrl } = getElementById(templatesCollection, templateId);
+    const cards = await cardsCollection.map(({ id, title, pages }) => {
+      const newId = `/cards/${id}`;
+      const templateId = pages[0]['templateId']; // first element of pages array is front-cover-*
+      const { imageUrl } = getElementById(templatesCollection, templateId);
 
-        return [...cards, { title, url: newId, imageUrl }];
-      },
-      []
-    );
+      return { title, url: newId, imageUrl };
+    });
 
     return res.send(cards);
   } catch (error) {
@@ -56,30 +53,23 @@ app.get('/cards/:cardId/:sizeId?', async (req, res) => {
       price = formatPrice(basePrice);
     }
 
-    const availableSizesWithTitle = sizes.reduce(
-      (availableSizes: ISize[], availableSize: string) => {
-        // OPTIONAL BELOW: is param :sizeId ie /gt included in sizes? if not => { availableSizes: null }
-        // const hasSize = sizes.includes(sizeId);
-        // if (!hasSize) return null;
-        const { id, title } = getElementById(sizesCollection, availableSize);
+    const availableSizesWithTitle = sizes.map((availableSize: string) => {
+      // OPTIONAL BELOW: is param :sizeId ie /gt included in sizes? if not => { availableSizes: null }
+      // const hasSize = sizes.includes(sizeId);
+      // if (!hasSize) return null;
+      const { id, title } = getElementById(sizesCollection, availableSize);
+      return { id, title };
+    });
 
-        return [...availableSizes, { id, title }];
-      },
-      []
-    );
+    const pagesWithSizeUrl = pages.map((extendedPage: IPage) => {
+      const { title, templateId } = extendedPage;
+      const { width, height, imageUrl } = getElementById(
+        templatesCollection,
+        templateId
+      );
 
-    const pagesWithSizeUrl = pages.reduce(
-      (extendedPages: IPageTemplate[], extendedPage: IPage) => {
-        const { title, templateId } = extendedPage;
-        const { width, height, imageUrl } = getElementById(
-          templatesCollection,
-          templateId
-        );
-
-        return [...extendedPages, { title, width, height, imageUrl }];
-      },
-      []
-    );
+      return { title, width, height, imageUrl };
+    });
 
     return res.send({
       title,

@@ -1,6 +1,10 @@
 export const fetchData = async (url: string) => {
-  const response = await fetch(url);
-  return await response.json();
+  try {
+    const response = await fetch(url);
+    return await response.json();
+  } catch (error) {
+    console.log(`Error: ${error.message}`);
+  }
 };
 
 export const getElementById = (dataCollection: any[], elementId: string) =>
