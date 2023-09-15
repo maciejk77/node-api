@@ -1,4 +1,3 @@
-import { ITemplate, ISize, IPage, ICard } from './interfaces';
 export const fetchData = async (url: string) => {
   try {
     const response = await fetch(url);
