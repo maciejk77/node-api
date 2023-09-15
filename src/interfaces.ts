@@ -1,6 +1,6 @@
 export interface IPage {
   title: string;
-  templateId?: string;
+  templateId: string;
 }
 
 export interface ICard {
