@@ -8,6 +8,19 @@ describe('GET /cards', () => {
     expect(status).toBe(200);
     expect(body).toHaveLength(3);
   });
+
+  test('returns matching card data for the third object', async () => {
+    const { status, body } = await request(app).get('/cards');
+
+    expect(status).toBe(200);
+    expect(body[2]).toEqual(
+      expect.objectContaining({
+        title: 'card 3 title',
+        url: '/cards/card003',
+        imageUrl: '/front-cover-landscape.jpg',
+      })
+    );
+  });
 });
 
 describe('GET /cards/card001', () => {
