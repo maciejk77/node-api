@@ -23,3 +23,5 @@ export interface ISize {
   title: string;
   priceMultiplier?: number;
 }
+
+export type IData = ICard | ITemplate | ISize;

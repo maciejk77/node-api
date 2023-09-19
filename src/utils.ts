@@ -1,3 +1,5 @@
+import { IData } from './interfaces';
+
 export const fetchData = async (url: string) => {
   try {
     const response = await fetch(url);
@@ -7,8 +9,12 @@ export const fetchData = async (url: string) => {
   }
 };
 
-export const getElementById = (dataCollection: any[], elementId: string) =>
+function getElementById<T extends IData>(
+  dataCollection: T[],
+  elementId: string
+) {
   dataCollection.find(({ id }) => id === elementId);
+}
 
 export const formatPrice = (
   basePrice: number,
