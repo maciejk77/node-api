@@ -120,7 +120,7 @@ Expected JSON response from `GET /cards/card001/gt`:
 
 ### Cards endpoint
 
-<img src="public/screen1.png" width="800">
+<img src="public/screen1.png" width="600">
 
 ### Card endpoint and tests for both
 
